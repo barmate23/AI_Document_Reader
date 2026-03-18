@@ -12,12 +12,5 @@ export default defineConfig({
         secure: false,
       }
     }
-  },
-  define: {
-    // Allows overriding API base at build time via VITE_API_BASE env var.
-    // In dev, the proxy handles /rag so empty string is fine.
-    // In production (Cloudflare Pages), set VITE_API_BASE to your backend URL
-    // e.g. https://your-backend.com in the CF Pages env vars dashboard.
-    'import.meta.env.VITE_API_BASE': JSON.stringify(process.env.VITE_API_BASE || '')
   }
 })

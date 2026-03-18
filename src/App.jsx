@@ -5,7 +5,8 @@ import {
   CheckCircle2, AlertCircle, Loader2, Trash2
 } from 'lucide-react';
 
-const API_BASE = '/rag';
+const API_BASE = (import.meta.env.VITE_API_BASE || '') + '/rag';
+
 
 export default function App() {
   const [messages, setMessages] = useState([

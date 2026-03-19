@@ -180,6 +180,84 @@ h1, h2, h3 { font-family: 'Outfit', sans-serif; }
   border-color: rgba(239,68,68,0.4);
 }
 
+/* ─── MODE TOGGLE ────────────────────────────────────── */
+.mode-toggle {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.25rem;
+  border-radius: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 0.6rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mode-btn.active {
+  background: var(--primary-gradient);
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+}
+
+/* ─── TEXT INGEST AREA ───────────────────────────────── */
+.text-ingest-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.ingest-textarea {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  color: white;
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: none;
+  min-height: 120px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.ingest-textarea:focus {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.btn-ingest-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  border: none;
+  background: var(--primary-gradient);
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-ingest-text:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* ─── CHAT CARD ──────────────────────────────────────── */
 /* The chat card IS a flex column. Its children are:
    1. .chat-messages  → flex:1, overflow-y:auto  ← ONLY this scrolls

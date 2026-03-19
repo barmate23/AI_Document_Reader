@@ -13,6 +13,8 @@ export default function App() {
     { id: 1, text: "Hello! I'm your AI assistant. Upload a PDF or ask me anything to get started.", isAi: true }
   ]);
   const [input, setInput] = useState('');
+  const [ingestMode, setIngestMode] = useState('file'); // 'file' or 'text'
+  const [textInput, setTextInput] = useState('');
   const [uploadStatus, setUploadStatus] = useState({ type: '', msg: '' });
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -47,10 +49,31 @@ export default function App() {
       setUploadStatus({ type: 'success', msg: `"${file.name}" ingested!` });
       addMessage(`PDF "${file.name}" has been ingested. You may now ask questions about it.`, true);
     } catch {
-      setUploadStatus({ type: 'error', msg: 'Upload failed. Is the backend running on port 8081?' });
+      setUploadStatus({ type: 'error', msg: 'Upload failed. Is the backend running?' });
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  /* ── Text ingestion ── */
+  const handleTextIngest = async () => {
+    if (!textInput.trim() || uploading) return;
+
+    setUploading(true);
+    setUploadStatus({ type: '', msg: '' });
+
+    try {
+      await axios.post(`${API_BASE}/ingest`, textInput, {
+        headers: { 'Content-Type': 'text/plain' }
+      });
+      setUploadStatus({ type: 'success', msg: 'Text context ingested!' });
+      addMessage("The provided text has been ingested into the knowledge base.", true);
+      setTextInput('');
+    } catch {
+      setUploadStatus({ type: 'error', msg: 'Ingestion failed.' });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -140,32 +163,70 @@ export default function App() {
             Knowledge Base
           </h2>
 
+          <div className="mode-toggle">
+            <button 
+              className={`mode-btn ${ingestMode === 'file' ? 'active' : ''}`}
+              onClick={() => setIngestMode('file')}
+            >
+              PDF File
+            </button>
+            <button 
+              className={`mode-btn ${ingestMode === 'text' ? 'active' : ''}`}
+              onClick={() => setIngestMode('text')}
+            >
+              Raw Text
+            </button>
+          </div>
+
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1rem', flexShrink: 0 }}>
-            Upload PDF documents to build the AI's knowledge base.
+            {ingestMode === 'file' 
+              ? 'Upload PDF documents to build the AI\'s knowledge base.'
+              : 'Paste manual text context for the AI to learn from.'}
           </p>
 
-          {/* Upload drop zone */}
-          <div className={`upload-area ${uploading ? 'dragging' : ''}`}>
-            <input
-              type="file"
-              accept=".pdf"
-              ref={fileInputRef}
-              onChange={handleFile}
-              disabled={uploading}
-            />
-            {uploading ? (
-              <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'0.5rem' }}>
-                <Loader2 className="spin" size={32} style={{ color:'var(--accent)' }} />
-                <span style={{ fontSize:'0.85rem', color:'var(--text-muted)' }}>Ingesting document…</span>
-              </div>
-            ) : (
-              <>
-                <FileText size={36} style={{ color:'var(--accent)', opacity:0.6, marginBottom:'0.5rem' }} />
-                <p style={{ fontSize:'0.9rem' }}>Click or drag to upload PDF</p>
-                <p style={{ fontSize:'0.75rem', color:'var(--text-muted)', marginTop:'0.25rem' }}>Max 10 MB</p>
-              </>
-            )}
-          </div>
+          {ingestMode === 'file' ? (
+            /* Upload drop zone */
+            <div className={`upload-area ${uploading ? 'dragging' : ''}`}>
+              <input
+                type="file"
+                accept=".pdf"
+                ref={fileInputRef}
+                onChange={handleFile}
+                disabled={uploading}
+              />
+              {uploading ? (
+                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'0.5rem' }}>
+                  <Loader2 className="spin" size={32} style={{ color:'var(--accent)' }} />
+                  <span style={{ fontSize:'0.85rem', color:'var(--text-muted)' }}>Ingesting document…</span>
+                </div>
+              ) : (
+                <>
+                  <FileText size={36} style={{ color:'var(--accent)', opacity:0.6, marginBottom:'0.5rem' }} />
+                  <p style={{ fontSize:'0.9rem' }}>Click or drag to upload PDF</p>
+                  <p style={{ fontSize:'0.75rem', color:'var(--text-muted)', marginTop:'0.25rem' }}>Max 10 MB</p>
+                </>
+              )}
+            </div>
+          ) : (
+            /* Text Ingestion Area */
+            <div className="text-ingest-container">
+              <textarea
+                className="ingest-textarea"
+                placeholder="Paste your text content here..."
+                value={textInput}
+                onChange={(e) => setTextInput(e.target.value)}
+                disabled={uploading}
+              ></textarea>
+              <button 
+                className="btn-ingest-text" 
+                onClick={handleTextIngest}
+                disabled={uploading || !textInput.trim()}
+              >
+                {uploading ? <Loader2 size={16} className="spin" /> : <Send size={16} />}
+                Ingest Text
+              </button>
+            </div>
+          )}
 
           {/* Status */}
           {uploadStatus.msg && (
@@ -183,6 +244,7 @@ export default function App() {
             Clear Conversation
           </button>
         </div>
+
 
         {/* ── RIGHT: AI Chat ── */}
         <div className="card chat-card">

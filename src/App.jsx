@@ -55,6 +55,7 @@ export default function App() {
   };
 
   /* ── Ask question ── */
+  /* ── Ask question (Streaming) ── */
   const handleAsk = async (e) => {
     e.preventDefault();
     if (!input.trim() || loading) return;
@@ -64,15 +65,55 @@ export default function App() {
     setInput('');
     setLoading(true);
 
+    // Initial AI message placeholder
+    const aiMessageId = Date.now() + Math.random();
+    setMessages(prev => [...prev, { id: aiMessageId, text: '', isAi: true }]);
+
     try {
-      const { data } = await axios.get(`${API_BASE}/ask`, { params: { question } });
-      addMessage(data, true);
+      const response = await fetch(`${API_BASE}/ask?question=${encodeURIComponent(question)}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        const chunk = decoder.decode(value, { stream: true });
+        
+        // Handle potential SSE format or raw stream
+        const lines = chunk.split('\n');
+        lines.forEach(line => {
+          if (line.trim().startsWith('data:')) {
+            const content = line.trim().substring(5);
+            if (content) {
+              setMessages(prev => prev.map(msg => 
+                msg.id === aiMessageId ? { ...msg, text: msg.text + content } : msg
+              ));
+            }
+          } else if (!line.trim().startsWith('data:') && line.trim().length > 0) {
+            // Fallback for non-SSE formatted streams
+            setMessages(prev => prev.map(msg => 
+              msg.id === aiMessageId ? { ...msg, text: msg.text + line } : msg
+            ));
+          }
+        });
+      }
     } catch (err) {
-      addMessage('Sorry, something went wrong. ' + (err.response?.data || err.message), true);
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId 
+          ? { ...msg, text: 'Sorry, something went wrong. ' + err.message } 
+          : msg
+      ));
     } finally {
       setLoading(false);
     }
   };
+
 
   const addMessage = (text, isAi) =>
     setMessages(prev => [...prev, { id: Date.now() + Math.random(), text, isAi }]);
